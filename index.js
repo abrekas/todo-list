@@ -36,11 +36,45 @@ class Component {
 
   setState(patch) {
     this.state = { ...(this.state ?? {}), ...(patch ?? {}) };
+    this.update();
+  }
 
-    if (this._domNode && this._domNode.parentNode) {
-      const next = this.render();
-      this._domNode.replaceWith(next);
-      this._domNode = next;
+  update() {
+    if (!this._domNode || !this._domNode.parentNode) return;
+
+    const active = document.activeElement;
+    const shouldRestoreFocus =
+      active instanceof HTMLElement && this._domNode.contains(active);
+
+    const activeId = shouldRestoreFocus ? active.getAttribute("id") : null;
+    const activeSelection =
+      shouldRestoreFocus &&
+      active instanceof HTMLInputElement &&
+      typeof active.selectionStart === "number" &&
+      typeof active.selectionEnd === "number"
+        ? {
+            start: active.selectionStart,
+            end: active.selectionEnd,
+            direction: active.selectionDirection ?? "none",
+          }
+        : null;
+
+    const next = this.render();
+    this._domNode.replaceWith(next);
+    this._domNode = next;
+
+    if (activeId) {
+      const el = this._domNode.querySelector(`#${activeId}`);
+      if (el instanceof HTMLElement) {
+        el.focus();
+        if (activeSelection && el instanceof HTMLInputElement) {
+          el.setSelectionRange(
+            activeSelection.start,
+            activeSelection.end,
+            activeSelection.direction
+          );
+        }
+      }
     }
   }
 
