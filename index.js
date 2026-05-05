@@ -40,6 +40,15 @@ class TodoList extends Component {
     this.state = ["Сделать домашку", "Сделать практику", "Пойти домой"]
   }
   render() {
+    let tasks = [];
+    this.state.forEach(currentLabel => {
+      let el = createElement("li", {}, [
+        createElement("input", { type: "checkbox" }),
+        createElement("label", {}, currentLabel),
+        createElement("button", {}, "🗑️")
+      ])
+      tasks.push(el)
+    })
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
       createElement("div", { class: "add-todo" }, [
@@ -50,15 +59,8 @@ class TodoList extends Component {
         }),
         createElement("button", { id: "add-btn" }, "+"),
       ]),
-      createElement("ul", { id: "todos" }, [
-        this.state.forEach(currentLabel => {
-          createElement("li", {}, [
-            createElement("input", { type: "checkbox" }),
-            createElement("label", {}, currentLabel),
-            createElement("button", {}, "🗑️")
-          ])
-        })
-      ])
+      createElement("ul", { id: "todos" }, tasks
+      )
     ]);
   }
 }
