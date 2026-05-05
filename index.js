@@ -56,9 +56,9 @@ class TodoList extends Component {
 
     this.state = {
       todos: [
-        { id: "hw", text: "Сделать домашку", completed: false },
-        { id: "practice", text: "Сделать практику", completed: false },
-        { id: "home", text: "Пойти домой", completed: false },
+        {text: "Сделать домашку", completed: false },
+        {text: "Сделать практику", completed: false },
+        {text: "Пойти домой", completed: false },
       ],
       newTodoText: "",
     };
@@ -72,7 +72,6 @@ class TodoList extends Component {
     if (!text) return;
 
     const nextTodo = {
-      id: `todo-${Date.now()}`,
       text,
       completed: false,
     };
