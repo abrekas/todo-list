@@ -90,15 +90,18 @@ class TodoList extends Component {
 
     this.state = {
       todos: [
-        {text: "Сделать домашку", completed: false },
-        {text: "Сделать практику", completed: false },
-        {text: "Пойти домой", completed: false },
+        { id: 1, text: "Сделать домашку", completed: false },
+        { id: 2, text: "Сделать практику", completed: false },
+        { id: 3, text: "Пойти домой", completed: false },
       ],
+      nextId: 4,
       newTodoText: "",
     };
 
     this.onAddTask = this.onAddTask.bind(this);
     this.onAddInputChange = this.onAddInputChange.bind(this);
+    this.onToggleTask = this.onToggleTask.bind(this);
+    this.onDeleteTask = this.onDeleteTask.bind(this);
   }
 
   onAddTask() {
@@ -106,12 +109,14 @@ class TodoList extends Component {
     if (!text) return;
 
     const nextTodo = {
+      id: this.state.nextId,
       text,
       completed: false,
     };
 
     this.setState({
       todos: [...this.state.todos, nextTodo],
+      nextId: this.state.nextId + 1,
       newTodoText: "",
     });
   }
@@ -120,12 +125,38 @@ class TodoList extends Component {
     this.setState({ newTodoText: event.target.value });
   }
 
+  onToggleTask(todoId) {
+    this.setState({
+      todos: this.state.todos.map((t) =>
+        t.id === todoId ? { ...t, completed: !t.completed } : t
+      ),
+    });
+  }
+
+  onDeleteTask(todoId) {
+    this.setState({
+      todos: this.state.todos.filter((t) => t.id !== todoId),
+    });
+  }
+
   render() {
     const tasks = this.state.todos.map((todo) =>
-      createElement("li", { "data-id": todo.id }, [
-        createElement("input", { type: "checkbox" }),
+      createElement("li", { "data-id": todo.id, class: todo.completed ? "completed" : "" }, [
+        createElement(
+          "input",
+          { type: "checkbox" },
+          null,
+          [
+            (el) => {
+              if (el instanceof HTMLInputElement) el.checked = !!todo.completed;
+            },
+            (el) => el.addEventListener("change", () => this.onToggleTask(todo.id)),
+          ]
+        ),
         createElement("label", {}, todo.text),
-        createElement("button", {}, "🗑️"),
+        createElement("button", {}, "🗑️", [
+          (el) => el.addEventListener("click", () => this.onDeleteTask(todo.id)),
+        ]),
       ])
     );
 
