@@ -99,36 +99,31 @@ class TodoList extends Component {
         { id: 3, text: "Пойти домой", completed: false },
       ],
       nextId: 4,
-      newTodoText: "",
     };
 
     this._tasksById = new Map();
 
     this.onAddTask = this.onAddTask.bind(this);
-    this.onAddInputChange = this.onAddInputChange.bind(this);
     this.onToggleTask = this.onToggleTask.bind(this);
     this.onDeleteTask = this.onDeleteTask.bind(this);
+
+    this._addTask = new AddTask({ onAddTask: this.onAddTask });
   }
 
-  onAddTask() {
-    const text = (this.state.newTodoText ?? "").trim();
-    if (!text) return;
+  onAddTask(text) {
+    const normalized = (text ?? "").trim();
+    if (!normalized) return;
 
     const nextTodo = {
       id: this.state.nextId,
-      text,
+      text: normalized,
       completed: false,
     };
 
     this.setState({
       todos: [...this.state.todos, nextTodo],
       nextId: this.state.nextId + 1,
-      newTodoText: "",
     });
-  }
-
-  onAddInputChange(event) {
-    this.setState({ newTodoText: event.target.value });
   }
 
   onToggleTask(todoId) {
@@ -165,23 +160,50 @@ class TodoList extends Component {
 
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
-      createElement("div", { class: "add-todo" }, [
-        createElement(
-          "input",
-          {
-            id: "new-todo",
-            type: "text",
-            placeholder: "Задание",
-            value: this.state.newTodoText,
-          },
-          null,
-          [(el) => el.addEventListener("input", this.onAddInputChange)]
-        ),
-        createElement("button", { id: "add-btn" }, "+", [
-          (el) => el.addEventListener("click", this.onAddTask),
-        ]),
-      ]),
+      this._addTask.createDomNode(),
       createElement("ul", { id: "todos" }, tasks),
+    ]);
+  }
+}
+
+class AddTask extends Component {
+  constructor(props) {
+    super();
+    this.props = props;
+    this.state = { text: "" };
+
+    this.onAddInputChange = this.onAddInputChange.bind(this);
+    this.onAddClick = this.onAddClick.bind(this);
+  }
+
+  onAddInputChange(event) {
+    this.setState({ text: event.target.value });
+  }
+
+  onAddClick() {
+    const text = (this.state.text ?? "").trim();
+    if (!text) return;
+
+    this.props.onAddTask(text);
+    this.setState({ text: "" });
+  }
+
+  render() {
+    return createElement("div", { class: "add-todo" }, [
+      createElement(
+        "input",
+        {
+          id: "new-todo",
+          type: "text",
+          placeholder: "Задание",
+          value: this.state.text,
+        },
+        null,
+        [(el) => el.addEventListener("input", this.onAddInputChange)]
+      ),
+      createElement("button", { id: "add-btn" }, "+", [
+        (el) => el.addEventListener("click", this.onAddClick),
+      ]),
     ]);
   }
 }
