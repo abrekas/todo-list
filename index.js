@@ -98,6 +98,8 @@ class TodoList extends Component {
       newTodoText: "",
     };
 
+    this._tasksById = new Map();
+
     this.onAddTask = this.onAddTask.bind(this);
     this.onAddInputChange = this.onAddInputChange.bind(this);
     this.onToggleTask = this.onToggleTask.bind(this);
@@ -134,19 +136,29 @@ class TodoList extends Component {
   }
 
   onDeleteTask(todoId) {
+    this._tasksById.delete(todoId);
     this.setState({
       todos: this.state.todos.filter((t) => t.id !== todoId),
     });
   }
 
   render() {
-    const tasks = this.state.todos.map((todo) =>
-      new Task({
-        todo,
-        onToggle: this.onToggleTask,
-        onDelete: this.onDeleteTask,
-      }).getDomNode()
-    );
+    const tasks = this.state.todos.map((todo) => {
+      let task = this._tasksById.get(todo.id);
+      if (!task) {
+        task = new Task({
+          todo,
+          onToggle: this.onToggleTask,
+          onDelete: this.onDeleteTask,
+        });
+        this._tasksById.set(todo.id, task);
+      } else {
+        task.props.todo = todo;
+      }
+
+      task._domNode = task.render();
+      return task._domNode;
+    });
 
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
@@ -189,15 +201,31 @@ class AddTask extends Component {
 }
 
 class Task extends Component {
-  constructor({ todo, onToggle, onDelete }) {
+  constructor(props) {
     super();
-    this.todo = todo;
-    this.onToggle = onToggle;
-    this.onDelete = onDelete;
+    this.props = props;
+    this.state = { confirmDelete: false };
+
+    this.onToggleChange = this.onToggleChange.bind(this);
+    this.onDeleteClick = this.onDeleteClick.bind(this);
+  }
+
+  onToggleChange() {
+    this.props.onToggle(this.props.todo.id);
+    if (this.state.confirmDelete) this.setState({ confirmDelete: false });
+  }
+
+  onDeleteClick() {
+    if (!this.state.confirmDelete) {
+      this.setState({ confirmDelete: true });
+      return;
+    }
+    this.props.onDelete(this.props.todo.id);
   }
 
   render() {
-    const todo = this.todo;
+    const { todo } = this.props;
+    const isConfirm = !!this.state.confirmDelete;
 
     return createElement(
       "li",
@@ -207,12 +235,15 @@ class Task extends Component {
           (el) => {
             if (el instanceof HTMLInputElement) el.checked = !!todo.completed;
           },
-          (el) => el.addEventListener("change", () => this.onToggle(todo.id)),
+          (el) => el.addEventListener("change", this.onToggleChange),
         ]),
         createElement("label", {}, todo.text),
-        createElement("button", {}, "🗑️", [
-          (el) => el.addEventListener("click", () => this.onDelete(todo.id)),
-        ]),
+        createElement(
+          "button",
+          { style: isConfirm ? "background:red;color:white;" : "" },
+          isConfirm ? "Удалить!" : "Удалить",
+          [(el) => el.addEventListener("click", this.onDeleteClick)]
+        ),
       ]
     );
   }
