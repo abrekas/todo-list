@@ -35,6 +35,10 @@ class Component {
 }
 
 class TodoList extends Component {
+  constructor() {
+    super();
+    this.state = ["Сделать домашку", "Сделать практику", "Пойти домой"]
+  }
   render() {
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
@@ -47,22 +51,14 @@ class TodoList extends Component {
         createElement("button", { id: "add-btn" }, "+"),
       ]),
       createElement("ul", { id: "todos" }, [
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Сделать домашку"),
-          createElement("button", {}, "🗑️")
-        ]),
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Сделать практику"),
-          createElement("button", {}, "🗑️")
-        ]),
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Пойти домой"),
-          createElement("button", {}, "🗑️")
-        ]),
-      ]),
+        this.state.forEach(currentLabel => {
+          createElement("li", {}, [
+            createElement("input", { type: "checkbox" }),
+            createElement("label", {}, currentLabel),
+            createElement("button", {}, "🗑️")
+          ])
+        })
+      ])
     ]);
   }
 }
