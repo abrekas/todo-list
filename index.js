@@ -1,4 +1,4 @@
-﻿function createElement(tag, attributes, children) {
+﻿function createElement(tag, attributes, children, callbacks) {
   const element = document.createElement(tag);
 
   if (attributes) {
@@ -21,11 +21,27 @@
     element.appendChild(children);
   }
 
+  if (Array.isArray(callbacks)) {
+    callbacks.forEach((cb) => {
+      if (typeof cb === "function") cb(element);
+    });
+  }
+
   return element;
 }
 
 class Component {
   constructor() {
+  }
+
+  setState(patch) {
+    this.state = { ...(this.state ?? {}), ...(patch ?? {}) };
+
+    if (this._domNode && this._domNode.parentNode) {
+      const next = this.render();
+      this._domNode.replaceWith(next);
+      this._domNode = next;
+    }
   }
 
   getDomNode() {
@@ -37,30 +53,68 @@ class Component {
 class TodoList extends Component {
   constructor() {
     super();
-    this.state = ["Сделать домашку", "Сделать практику", "Пойти домой"]
+
+    this.state = {
+      todos: [
+        { id: "hw", text: "Сделать домашку", completed: false },
+        { id: "practice", text: "Сделать практику", completed: false },
+        { id: "home", text: "Пойти домой", completed: false },
+      ],
+      newTodoText: "",
+    };
+
+    this.onAddTask = this.onAddTask.bind(this);
+    this.onAddInputChange = this.onAddInputChange.bind(this);
   }
+
+  onAddTask() {
+    const text = (this.state.newTodoText ?? "").trim();
+    if (!text) return;
+
+    const nextTodo = {
+      id: `todo-${Date.now()}`,
+      text,
+      completed: false,
+    };
+
+    this.setState({
+      todos: [...this.state.todos, nextTodo],
+      newTodoText: "",
+    });
+  }
+
+  onAddInputChange(event) {
+    this.setState({ newTodoText: event.target.value });
+  }
+
   render() {
-    let tasks = [];
-    this.state.forEach(currentLabel => {
-      let el = createElement("li", {}, [
+    const tasks = this.state.todos.map((todo) =>
+      createElement("li", { "data-id": todo.id }, [
         createElement("input", { type: "checkbox" }),
-        createElement("label", {}, currentLabel),
-        createElement("button", {}, "🗑️")
+        createElement("label", {}, todo.text),
+        createElement("button", {}, "🗑️"),
       ])
-      tasks.push(el)
-    })
+    );
+
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
       createElement("div", { class: "add-todo" }, [
-        createElement("input", {
-          id: "new-todo",
-          type: "text",
-          placeholder: "Задание",
-        }),
-        createElement("button", { id: "add-btn" }, "+"),
+        createElement(
+          "input",
+          {
+            id: "new-todo",
+            type: "text",
+            placeholder: "Задание",
+            value: this.state.newTodoText,
+          },
+          null,
+          [(el) => el.addEventListener("input", this.onAddInputChange)]
+        ),
+        createElement("button", { id: "add-btn" }, "+", [
+          (el) => el.addEventListener("click", this.onAddTask),
+        ]),
       ]),
-      createElement("ul", { id: "todos" }, tasks
-      )
+      createElement("ul", { id: "todos" }, tasks),
     ]);
   }
 }
